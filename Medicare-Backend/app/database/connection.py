@@ -4,11 +4,11 @@ from sqlalchemy.orm import sessionmaker
 import mysql.connector
 from mysql.connector import Error
 
-MYSQL_USER = "root"
-MYSQL_PASSWORD = "A8070cee"
+MYSQL_USER = ""
+MYSQL_PASSWORD = ""
 MYSQL_HOST = "localhost"
 MYSQL_PORT = "3306"
-MYSQL_DB = "medicare"
+MYSQL_DB = ""
 
 def init_db():
     try:
