@@ -10,7 +10,11 @@ class AccessLog(Base):
     patient_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     doctor_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     record_id = Column(Integer, ForeignKey("records.id"), nullable=True)
-    action = Column(String(100), nullable=False)  # e.g., "viewed record", "downloaded record"
+    
+    # 🆕 NEW FIELDS
+    action = Column(String(100), nullable=False) 
+    access_type = Column(String(50), default="ROUTINE")  # Options: ROUTINE, EMERGENCY, REVOKE, ADMIN
+    
     timestamp = Column(DateTime, default=datetime.utcnow)
 
     patient = relationship("User", foreign_keys=[patient_id])

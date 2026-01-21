@@ -2,10 +2,10 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import SQLAlchemyError
-from app.database.connection import Base, engine
+# 1. Update this import to include 'init_db'
+from app.database.connection import Base, engine, SessionLocal, init_db
 from app.routes import auth, doctor, patient, admin, record, access_control, blockchain
 from app.services.blockchain_service import verify_chain
-from app.database.connection import SessionLocal
 from app.utils.logger import logger
 from app.routes import connection_router
 from fastapi.openapi.utils import get_openapi
@@ -35,6 +35,10 @@ app.include_router(record.router)
 app.include_router(access_control.router)
 app.include_router(blockchain.router)
 app.include_router(connection_router.router)
+
+# 2. Call init_db() HERE, before initialize_tables()
+# This ensures the 'medichain' database is created if it doesn't exist.
+init_db()
 
 def initialize_tables():
     try:

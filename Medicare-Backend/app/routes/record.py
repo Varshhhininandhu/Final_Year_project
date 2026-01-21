@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, B
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from datetime import datetime
-import base64, json, requests, io, mimetypes, os, hashlib  # <-- added hashlib
+import base64, json, requests, io, mimetypes, os, hashlib
 from fastapi.responses import StreamingResponse
 from app.database.connection import get_db
 from app.services.auth_helpers import get_token_payload
@@ -399,6 +399,26 @@ def decrypt_record_doctor(
         )
         if not access:
             raise HTTPException(status_code=403, detail="Access not granted for this record")
+        
+        # 🆕 CHECK EXPIRATION
+        if access.expires_at and access.expires_at < datetime.utcnow():
+            # Log the failed attempt
+            log_entry = AccessLog(
+                patient_id=record.patient_id,
+                doctor_id=doctor_id,
+                record_id=record.id,
+                action="Doctor attempted to access expired record",
+                access_type="ROUTINE" # Tag as routine to show in dashboard
+            )
+            db.add(log_entry)
+            
+            # (Optional) Update status to expired
+            access.status = "expired"
+            access.granted = False
+            db.commit()
+
+            raise HTTPException(status_code=403, detail="Access has expired.")
+
         eph_pub = serialization.load_der_public_key(base64.b64decode(access.eph_pub_b64))
         shared = doctor_priv.exchange(ec.ECDH(), eph_pub)
         h = hashes.Hash(hashes.SHA256()); h.update(shared); kek = h.finalize()
@@ -443,11 +463,13 @@ def decrypt_record_doctor(
     db.add(access_block)
     db.commit()
     
+    # 🆕 LOGGING UPDATE: Mark as ROUTINE access
     log_entry = AccessLog(
         patient_id=record.patient_id,
         doctor_id=doctor_id,
         record_id=record.id,
         action="Doctor decrypted and viewed the record",
+        access_type="ROUTINE"
     )
     db.add(log_entry)
     db.commit()

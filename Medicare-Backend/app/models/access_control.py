@@ -19,3 +19,7 @@ class AccessControl(Base):
     status = Column(String(100), default="pending")  # pending, approved, rejected
     granted_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
+
+    # 🆕 NEW FIELD: Expiration Date
+    # This is required for the Time-Bound Access feature
+    expires_at = Column(DateTime, nullable=True)
